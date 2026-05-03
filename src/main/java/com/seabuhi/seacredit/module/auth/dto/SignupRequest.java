@@ -4,9 +4,15 @@ import com.seabuhi.seacredit.common.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SignupRequest {
     @NotBlank(message = "İstifadəçi adı boş ola bilməz")
     @Size(min = 3, max = 50, message = "İstifadəçi adı 3-50 simvol arasında olmalıdır")

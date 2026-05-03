@@ -8,11 +8,8 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
   flyway:
-    enabled: false
+    enabled: false # Use hibernate ddl-auto for faster tests
 
 app:
   admin:
@@ -25,7 +22,10 @@ app:
   upload:
     dir: target/test-uploads
 
-logging:
-  level:
-    root: INFO
-    com.seabuhi.seacredit: DEBUG
+# Disable external services in tests
+spring:
+  mail:
+    host: localhost
+  data:
+    redis:
+      host: localhost
