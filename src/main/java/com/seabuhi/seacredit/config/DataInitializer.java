@@ -45,7 +45,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedAdminUser() {
-        if (userRepository.existsByUsername(adminUsername)) return;
+        if (userRepository.existsByUsernameAndDeletedFalse(adminUsername)) return;
 
         Role adminRole = roleRepository.findByName("ADMIN").orElseThrow();
         User admin = User.builder()

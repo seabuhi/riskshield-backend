@@ -13,15 +13,24 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    container_name: seacredit-redis
+    ports:
+      - "6379:6379"
+
   app:
     build: .
     container_name: seacredit-app
     depends_on:
       - db
+      - redis
     environment:
       - DB_URL=jdbc:postgresql://db:5432/seacredit
       - DB_USERNAME=${DB_USERNAME:-postgres}
       - DB_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}

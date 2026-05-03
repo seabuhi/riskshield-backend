@@ -21,9 +21,9 @@ public class AnalyticsService {
     @Cacheable(value = "dashboardStats", key = "'snapshot'")
     public Map<String, Object> getDashboardSnapshot() {
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("totalUsers",        userRepository.count());
-        stats.put("activeUsers",       userRepository.countByActiveTrue());
-        stats.put("unverifiedUsers",   userRepository.countByVerifiedFalse());
+        stats.put("totalUsers",        userRepository.countByDeletedFalse());
+        stats.put("activeUsers",       userRepository.countByActiveTrueAndDeletedFalse());
+        stats.put("unverifiedUsers",   userRepository.countByVerifiedFalseAndDeletedFalse());
         stats.put("openFraudAlerts",   fraudAlertRepository.countByResolvedFalse());
         stats.put("totalFraudAlerts",  fraudAlertRepository.count());
 
@@ -38,9 +38,9 @@ public class AnalyticsService {
     @Cacheable(value = "userStats", key = "'users'")
     public Map<String, Object> getUserStats() {
         Map<String, Object> s = new LinkedHashMap<>();
-        s.put("total",      userRepository.count());
-        s.put("active",     userRepository.countByActiveTrue());
-        s.put("unverified", userRepository.countByVerifiedFalse());
+        s.put("total",      userRepository.countByDeletedFalse());
+        s.put("active",     userRepository.countByActiveTrueAndDeletedFalse());
+        s.put("unverified", userRepository.countByVerifiedFalseAndDeletedFalse());
         return s;
     }
 
@@ -68,5 +68,3 @@ public class AnalyticsService {
         return s;
     }
 }
-
-

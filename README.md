@@ -71,8 +71,8 @@
 | **JWT (jjwt 0.12)** | Stateless token auth |
 | **Spring Data JPA** | Database ORM |
 | **PostgreSQL** | Production database |
-| **Bucket4j** | Rate limiting |
-| **Redis** | Recommended for production Idempotency (Current: In-memory) |
+| **Redis** | Distributed Idempotency & Caching |
+| **Spring Boot Actuator** | Production Monitoring (Health, Metrics) |
 | **Spring AOP** | Audit logging |
 | **Spring Mail** | Email notifications |
 | **SpringDoc OpenAPI** | Swagger UI documentation |
