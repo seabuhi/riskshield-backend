@@ -16,10 +16,10 @@ public class AdminUserService {
 
     public Page<User> listUsers(Pageable pageable, String search) {
         if (search != null && !search.isBlank()) {
-            return userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+            return userRepository.findByDeletedFalseAndUsernameContainingIgnoreCaseOrDeletedFalseAndEmailContainingIgnoreCase(
                     search, search, pageable);
         }
-        return userRepository.findAll(pageable);
+        return userRepository.findByDeletedFalse(pageable);
     }
 
     public User getUser(Long id) {

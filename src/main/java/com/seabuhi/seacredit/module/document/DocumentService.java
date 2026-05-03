@@ -102,27 +102,23 @@ public class DocumentService {
         }
     }
 
-    // ─── Delete ──────────────────────────────────────────────────────────────────
+    // ─── Delete (Soft) ───────────────────────────────────────────────────────────
 
     @Transactional
     public void delete(Long documentId, Long userId) {
         CustomerDocument doc = findSecure(documentId, userId);
-        try {
-            Files.deleteIfExists(Paths.get(doc.getFilePath()));
-        } catch (IOException e) {
-            log.warn("Physical file could not be deleted: {}", doc.getFilePath());
-        }
-        documentRepository.delete(doc);
+        doc.softDelete();
+        documentRepository.save(doc);
     }
 
     // ─── Query ───────────────────────────────────────────────────────────────────
 
     public List<CustomerDocument> getMyDocuments(Long userId) {
-        return documentRepository.findByUserId(userId);
+        return documentRepository.findByUserIdAndDeletedFalse(userId);
     }
 
     public CustomerDocument getById(Long id) {
-        return documentRepository.findById(id)
+        return documentRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new BusinessException("DOC_NOT_FOUND", "Sənəd tapılmadı"));
     }
 
@@ -130,7 +126,7 @@ public class DocumentService {
 
     @Transactional
     public void updateStatus(Long documentId, String status) {
-        CustomerDocument doc = documentRepository.findById(documentId)
+        CustomerDocument doc = documentRepository.findByIdAndDeletedFalse(documentId)
                 .orElseThrow(() -> new BusinessException("DOC_NOT_FOUND", "Sənəd tapılmadı"));
         doc.setStatus(status.toUpperCase());
         documentRepository.save(doc);
@@ -139,7 +135,7 @@ public class DocumentService {
     // ─── Helpers ─────────────────────────────────────────────────────────────────
 
     private CustomerDocument findSecure(Long documentId, Long userId) {
-        CustomerDocument doc = documentRepository.findById(documentId)
+        CustomerDocument doc = documentRepository.findByIdAndDeletedFalse(documentId)
                 .orElseThrow(() -> new BusinessException("DOC_NOT_FOUND", "Sənəd tapılmadı"));
         if (!doc.getUserId().equals(userId)) {
             throw new BusinessException("ACCESS_DENIED", "Bu sənədə girişiniz yoxdur");
@@ -153,5 +149,3 @@ public class DocumentService {
         return (idx >= 0) ? filename.substring(idx) : "";
     }
 }
-
-

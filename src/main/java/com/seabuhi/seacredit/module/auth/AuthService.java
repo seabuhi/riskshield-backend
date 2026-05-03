@@ -16,7 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -31,12 +30,9 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final UserOtpRepository userOtpRepository;
-    private final com.seabuhi.seacredit.module.notification.EmailService emailService;
+    private final OtpService otpService;
     private final PasswordEncoder passwordEncoder;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
-
-    private static final SecureRandom random = new SecureRandom();
 
     @Value("${app.jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
@@ -50,7 +46,7 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        User user = userRepository.findById(userPrincipal.getId())
+        User user = userRepository.findByIdAndDeletedFalse(userPrincipal.getId())
                 .orElseThrow(() -> new BusinessException("İstifadəçi tapılmadı"));
 
         if (!user.isVerified()) {
@@ -60,7 +56,7 @@ public class AuthService {
         String accessToken = tokenProvider.generateAccessToken(authentication);
         String refreshTokenStr = tokenProvider.generateRefreshToken(userPrincipal.getUsername());
 
-        saveRefreshToken(userPrincipal.getId(), refreshTokenStr);
+        saveRefreshToken(user, refreshTokenStr);
 
         List<String> roles = userPrincipal.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -79,10 +75,10 @@ public class AuthService {
 
     @Transactional
     public void signup(SignupRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
+        if (userRepository.existsByUsernameAndDeletedFalse(request.getUsername())) {
             throw new BusinessException("USERNAME_EXISTS", "İstifadəçi adı artıq tutulub");
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmailAndDeletedFalse(request.getEmail())) {
             throw new BusinessException("EMAIL_EXISTS", "Bu email artıq qeydiyyatdan keçib");
         }
 
@@ -102,10 +98,10 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // Generate OTP
-        generateAndSaveOtp(user, "SIGNUP_VERIFICATION");
+        // Generate OTP via OtpService
+        otpService.generateAndSaveOtp(user, "SIGNUP_VERIFICATION");
 
-        // Publish event → triggers welcome email asynchronously
+        // Publish event
         eventPublisher.publishEvent(
                 new com.seabuhi.seacredit.module.auth.event.UserRegisteredEvent(this, user.getId(), user.getEmail(), user.getFullName())
         );
@@ -114,7 +110,7 @@ public class AuthService {
     @Transactional
     public void logout() {
         UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
+        User user = userRepository.findByIdAndDeletedFalse(userPrincipal.getId()).orElseThrow();
         refreshTokenRepository.deleteByUser(user);
         SecurityContextHolder.clearContext();
     }
@@ -122,7 +118,7 @@ public class AuthService {
     @Transactional
     public void changePassword(String currentPassword, String newPassword) {
         UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
+        User user = userRepository.findByIdAndDeletedFalse(userPrincipal.getId()).orElseThrow();
 
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new BusinessException("INVALID_PASSWORD", "Cari şifrə yanlışdır");
@@ -135,20 +131,31 @@ public class AuthService {
     @Transactional
     public TokenRefreshResponse refresh(TokenRefreshRequest request) {
         String requestRefreshToken = request.getRefreshToken();
+        
+        // 1. Get username from token
+        String username = tokenProvider.getUsernameFromRefreshToken(requestRefreshToken);
+        User user = userRepository.findByUsernameAndDeletedFalse(username)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "İstifadəçi tapılmadı"));
 
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(requestRefreshToken)
+        // 2. Find hashed token record for this user
+        RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
                 .orElseThrow(() -> new BusinessException("REFRESH_TOKEN_NOT_FOUND", "Refresh token tapılmadı"));
 
+        // 3. Verify security
         if (refreshToken.isRevoked()) {
             throw new BusinessException("TOKEN_REVOKED", "Bu token ləğv edilib");
         }
-
         if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(refreshToken);
             throw new BusinessException("TOKEN_EXPIRED", "Refresh token müddəti bitib");
         }
+        
+        // 4. Verify hash
+        if (!passwordEncoder.matches(requestRefreshToken, refreshToken.getToken())) {
+            throw new BusinessException("INVALID_TOKEN", "Refresh token yanlışdır");
+        }
 
-        User user = refreshToken.getUser();
+        // 5. Generate new access token
         String newAccessToken = tokenProvider.generateAccessToken(
                 new UsernamePasswordAuthenticationToken(UserPrincipal.create(user), null, 
                         user.getRoles().stream().map(r -> new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + r.getName())).collect(Collectors.toList()))
@@ -160,27 +167,13 @@ public class AuthService {
                 .build();
     }
 
-    private void generateAndSaveOtp(User user, String purpose) {
-        String code = String.format("%06d", random.nextInt(1000000));
-        UserOtp otp = UserOtp.builder()
-                .user(user)
-                .code(code)
-                .purpose(purpose)
-                .expiresAt(LocalDateTime.now().plusMinutes(15))
-                .used(false)
-                .build();
-        userOtpRepository.save(otp);
-        emailService.sendEmail(user.getEmail(), "Sea-Credit Qeydiyyat", 
-                "Xoş gəlmisiniz! Sizin təsdiqləmə kodunuz: " + code);
-    }
-
-    private void saveRefreshToken(Long userId, String token) {
-        User user = userRepository.findById(userId).orElseThrow();
+    private void saveRefreshToken(User user, String token) {
         refreshTokenRepository.deleteByUser(user);
 
+        // Save hashed token
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
-                .token(token)
+                .token(passwordEncoder.encode(token))
                 .expiresAt(LocalDateTime.now().plusNanos(refreshExpirationMs * 1000000))
                 .revoked(false)
                 .build();
@@ -188,6 +181,3 @@ public class AuthService {
         refreshTokenRepository.save(refreshToken);
     }
 }
-
-
-

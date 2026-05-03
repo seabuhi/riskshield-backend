@@ -9,15 +9,18 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
+    Optional<User> findByUsernameAndDeletedFalse(String username);
+    Optional<User> findByEmailAndDeletedFalse(String email);
     Optional<User> findByUsernameOrEmail(String username, String email);
-    Boolean existsByUsername(String username);
-    Boolean existsByEmail(String email);
-    Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+    Boolean existsByUsernameAndDeletedFalse(String username);
+    Boolean existsByEmailAndDeletedFalse(String email);
+
+    Page<User> findByDeletedFalse(Pageable pageable);
+
+    Page<User> findByDeletedFalseAndUsernameContainingIgnoreCaseOrDeletedFalseAndEmailContainingIgnoreCase(
             String username, String email, Pageable pageable);
-    long countByActiveTrue();
-    long countByVerifiedFalse();
+
+    long countByActiveTrueAndDeletedFalse();
+    long countByVerifiedFalseAndDeletedFalse();
+    long countByDeletedFalse();
 }
-
-

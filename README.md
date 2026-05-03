@@ -72,6 +72,7 @@
 | **Spring Data JPA** | Database ORM |
 | **PostgreSQL** | Production database |
 | **Bucket4j** | Rate limiting |
+| **Redis** | Recommended for production Idempotency (Current: In-memory) |
 | **Spring AOP** | Audit logging |
 | **Spring Mail** | Email notifications |
 | **SpringDoc OpenAPI** | Swagger UI documentation |
@@ -124,7 +125,7 @@ export MAIL_PASSWORD=your_app_password
 |----------|-----|
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | API Docs | http://localhost:8080/v3/api-docs |
-| Default Admin | `admin` / `Admin@12345` |
+| Default Admin | Loaded from environment variables |
 
 ---
 

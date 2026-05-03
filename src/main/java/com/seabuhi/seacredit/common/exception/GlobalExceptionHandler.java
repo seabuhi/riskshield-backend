@@ -94,7 +94,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleGeneral(
             Exception ex, HttpServletRequest request) {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
-                "Gözlənilməz xəta: " + ex.getMessage(), request);
+                "Gözlənilməz xəta baş verdi", request);
     }
 
     // ── Helper ───────────────────────────────────────────────────────────────────

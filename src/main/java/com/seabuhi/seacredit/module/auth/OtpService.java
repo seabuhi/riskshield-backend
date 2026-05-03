@@ -4,6 +4,7 @@ import com.seabuhi.seacredit.common.exception.BusinessException;
 import com.seabuhi.seacredit.module.user.User;
 import com.seabuhi.seacredit.module.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,11 +18,12 @@ public class OtpService {
     private final UserOtpRepository userOtpRepository;
     private final UserRepository userRepository;
     private final com.seabuhi.seacredit.module.notification.EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
     private final SecureRandom random = new SecureRandom();
 
     @Transactional
     public void sendOtp(String email, String purpose) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "İstifadəçi tapılmadı"));
         
         generateAndSaveOtp(user, purpose);
@@ -29,7 +31,7 @@ public class OtpService {
 
     @Transactional
     public void verifyOtp(String email, String code, String purpose) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "İstifadəçi tapılmadı"));
 
         UserOtp otp = userOtpRepository.findTopByUserAndPurposeAndUsedOrderByCreatedAtDesc(user, purpose, false)
@@ -39,7 +41,8 @@ public class OtpService {
             throw new BusinessException("OTP_EXPIRED", "Təsdiqləmə kodunun vaxtı bitib");
         }
 
-        if (!otp.getCode().equals(code)) {
+        // Verify hashed OTP
+        if (!passwordEncoder.matches(code, otp.getCode())) {
             throw new BusinessException("INVALID_OTP", "Təsdiqləmə kodu yanlışdır");
         }
 
@@ -54,12 +57,11 @@ public class OtpService {
 
     @Transactional
     public void resendOtp(String email, String purpose) {
-        // Implement logic to prevent spam (e.g., check last OTP time)
         sendOtp(email, purpose);
     }
 
     public LocalDateTime getOtpExpireTime(String email, String purpose) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "İstifadəçi tapılmadı"));
 
         return userOtpRepository.findTopByUserAndPurposeAndUsedOrderByCreatedAtDesc(user, purpose, false)
@@ -67,20 +69,20 @@ public class OtpService {
                 .orElse(null);
     }
 
-    private void generateAndSaveOtp(User user, String purpose) {
-        String code = String.format("%06d", random.nextInt(1000000));
+    public void generateAndSaveOtp(User user, String purpose) {
+        String plainCode = String.format("%06d", random.nextInt(1000000));
+        
+        // Save hashed code for security
         UserOtp otp = UserOtp.builder()
                 .user(user)
-                .code(code)
+                .code(passwordEncoder.encode(plainCode))
                 .purpose(purpose)
                 .expiresAt(LocalDateTime.now().plusMinutes(15))
                 .used(false)
                 .build();
         userOtpRepository.save(otp);
+        
         emailService.sendEmail(user.getEmail(), "Sea-Credit Təsdiqləmə Kodu", 
-                "Sizin təsdiqləmə kodunuz: " + code + "\nMəqsəd: " + purpose);
+                "Sizin təsdiqləmə kodunuz: " + plainCode + "\nMəqsəd: " + purpose);
     }
 }
-
-
-

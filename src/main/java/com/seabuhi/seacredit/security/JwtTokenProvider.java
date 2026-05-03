@@ -55,6 +55,10 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
+    public String getUsernameFromRefreshToken(String token) {
+        return getUsernameFromJWT(token);
+    }
+
     public boolean validateToken(String authToken) {
         try {
             SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
