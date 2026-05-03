@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class NotificationRetryTask {
     private final EmailService emailService;
 
     @Scheduled(fixedDelay = 600000) // Every 10 minutes
+    @Transactional
     public void retryFailedNotifications() {
         log.info("Checking for failed notifications...");
         List<Notification> failedNotifications = notificationRepository.findByStatus("FAILED");
@@ -24,14 +26,15 @@ public class NotificationRetryTask {
             if (notification.getRetryCount() < 3) {
                 log.info("Retrying notification {} for {}", notification.getId(), notification.getRecipient());
                 notification.setRetryCount(notification.getRetryCount() + 1);
-                emailService.sendEmail(notification.getRecipient(), notification.getSubject(), notification.getContent());
-                // The sendEmail method will update the status and retry count properly (actually it creates a new one, 
-                // but let's just mark the old one as RETRIED)
-                notification.setStatus("RETRIED");
+                notification.setStatus("RETRYING");
+                
+                // Perform actual send and update existing record
+                emailService.sendActual(notification);
+            } else {
+                log.warn("Notification {} reached max retries", notification.getId());
+                notification.setStatus("FAILED_PERMANENTLY");
                 notificationRepository.save(notification);
             }
         }
     }
 }
-
-

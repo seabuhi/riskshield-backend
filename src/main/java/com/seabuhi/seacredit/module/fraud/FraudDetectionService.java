@@ -5,12 +5,14 @@ import com.seabuhi.seacredit.module.fraud.dto.FraudCheckRequest;
 import com.seabuhi.seacredit.module.fraud.dto.FraudCheckResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +22,10 @@ public class FraudDetectionService {
     private final BlacklistRepository blacklistRepository;
     private final FraudAlertRepository fraudAlertRepository;
     private final FeatureToggle featureToggle;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
     public FraudCheckResponse analyzeTransaction(FraudCheckRequest request) {
-        // Feature toggle check
         if (!featureToggle.isFraudDetection()) {
             log.info("Fraud detection is DISABLED via feature toggle");
             return FraudCheckResponse.builder()
@@ -59,16 +61,30 @@ public class FraudDetectionService {
             riskScore += 20;
         }
 
-        // 5. Unknown device
-        if (request.getDeviceInfo() == null || request.getDeviceInfo().isBlank()) {
-            flags.add("UNKNOWN_DEVICE");
-            riskScore += 15;
+        // 5. Redis Velocity Check: Transactions per User (Max 5 per minute)
+        if (request.getUserId() != null) {
+            String velocityKey = "fraud:velocity:user:" + request.getUserId();
+            Long count = redisTemplate.opsForValue().increment(velocityKey);
+            if (count != null && count == 1) {
+                redisTemplate.expire(velocityKey, 1, TimeUnit.MINUTES);
+            }
+            if (count != null && count > 5) {
+                flags.add("HIGH_VELOCITY_USER");
+                riskScore += 50;
+            }
         }
 
-        // 6. Multiple rapid requests (needs Redis in production, simplified here)
-        if (request.getRequestCount() != null && request.getRequestCount() > 10) {
-            flags.add("RAPID_REQUESTS");
-            riskScore += 30;
+        // 6. Redis Velocity Check: Transactions per IP (Max 20 per minute)
+        if (request.getIpAddress() != null) {
+            String ipVelocityKey = "fraud:velocity:ip:" + request.getIpAddress();
+            Long count = redisTemplate.opsForValue().increment(ipVelocityKey);
+            if (count != null && count == 1) {
+                redisTemplate.expire(ipVelocityKey, 1, TimeUnit.MINUTES);
+            }
+            if (count != null && count > 20) {
+                flags.add("HIGH_VELOCITY_IP");
+                riskScore += 30;
+            }
         }
 
         String severity;
@@ -87,7 +103,6 @@ public class FraudDetectionService {
             blocked = false;
         }
 
-        // Save alert if risk is detected
         if (!flags.isEmpty()) {
             FraudAlert alert = FraudAlert.builder()
                     .userId(request.getUserId())
@@ -119,7 +134,6 @@ public class FraudDetectionService {
                 .active(true)
                 .build();
         blacklistRepository.save(entry);
-        log.info("Added to blacklist: {} ({})", entryValue, type);
     }
 
     @Transactional
@@ -146,5 +160,3 @@ public class FraudDetectionService {
         return fraudAlertRepository.findByUserId(userId);
     }
 }
-
-
