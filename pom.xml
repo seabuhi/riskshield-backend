@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.seabuhi</groupId>
-    <artifactId>seacredit</artifactId>
+    <artifactId>riskshield</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>SeaCredit</name>
-    <description>Sea-Credit Enterprise Backend</description>
+    <name>riskshield</name>
+    <description>RiskShield Enterprise Backend</description>
 
     <properties>
         <java.version>17</java.version>
@@ -162,4 +162,5 @@
     </build>
 
 </project>
+
 

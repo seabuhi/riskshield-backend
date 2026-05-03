@@ -1,4 +1,4 @@
-# 🏦 Sea-Credit Enterprise Backend API
+# 🏦 RiskShield Enterprise Backend API
 
 > A professional-grade, production-ready banking backend built with **Spring Boot 3.2** featuring 10 comprehensive API modules.
 
@@ -91,20 +91,20 @@
 ### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/sea-credit-backend.git
-cd sea-credit-backend
+git clone https://github.com/YOUR_USERNAME/RiskShield-backend.git
+cd RiskShield-backend
 ```
 
 ### 2. Create Database
 
 ```sql
-CREATE DATABASE seacredit;
+CREATE DATABASE riskshield;
 ```
 
 ### 3. Set Environment Variables
 
 ```bash
-export DB_URL=jdbc:postgresql://localhost:5432/seacredit
+export DB_URL=jdbc:postgresql://localhost:5432/riskshield
 export DB_USERNAME=postgres
 export DB_PASSWORD=your_password
 export JWT_SECRET=your_secret_key_min_64_chars
@@ -194,7 +194,7 @@ DELETE /api/v1/admin/users/{id}        → Delete user
 ## 📁 Project Structure
 
 ```
-src/main/java/com/seabuhi/seacredit/
+src/main/java/com/seabuhi/riskshield/
 ├── common/
 │   ├── exception/          # BusinessException, GlobalExceptionHandler
 │   ├── model/              # BaseEntity (auto-timestamps)
@@ -233,3 +233,4 @@ MIT License — free to use for personal and commercial projects.
 ---
 
 > Built with ❤️ for the developer community
+

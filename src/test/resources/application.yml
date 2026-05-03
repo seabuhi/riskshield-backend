@@ -28,4 +28,5 @@ app:
 logging:
   level:
     root: INFO
-    com.seabuhi.seacredit: DEBUG
+    com.seabuhi.riskshield: DEBUG
+
