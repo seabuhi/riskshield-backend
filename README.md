@@ -1,236 +1,136 @@
-# 🏦 RiskShield Enterprise Backend API
+🏦 RiskShield Backend
 
-> A professional-grade, production-ready banking backend built with **Spring Boot 3.2** featuring 10 comprehensive API modules.
+A production-ready FinTech backend platform built with Spring Boot, designed for secure credit, risk, and user management systems.
+
 
 ![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green?style=flat-square&logo=spring)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql)
+![Redis](https://img.shields.io/badge/Redis-Caching-red?style=flat-square&logo=redis)
+![Docker](https://img.shields.io/badge/Docker-Enabled-blue?style=flat-square&logo=docker)
 ![JWT](https://img.shields.io/badge/Auth-JWT-red?style=flat-square)
 ![Swagger](https://img.shields.io/badge/Docs-Swagger%20UI-brightgreen?style=flat-square&logo=swagger)
 
----
 
-## 📋 Table of Contents
-- [Architecture](#-architecture)
-- [API Modules](#-api-modules)
-- [Tech Stack](#-tech-stack)
-- [Getting Started](#-getting-started)
-- [API Documentation](#-api-documentation)
-- [Security](#-security)
-- [Project Structure](#-project-structure)
 
----
 
-## 🏗 Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    API Gateway Layer                      │
-│  ┌─────────────┐ ┌─────────────┐ ┌──────────────────┐  │
-│  │ Rate Limiter │ │ JWT Filter  │ │ CORS / Security  │  │
-│  └─────────────┘ └─────────────┘ └──────────────────┘  │
-├─────────────────────────────────────────────────────────┤
-│                   Controller Layer                       │
-│  Auth │ OTP │ Notification │ Credit │ Fraud │ Audit     │
-│  Document │ Admin │ Analytics                            │
-├─────────────────────────────────────────────────────────┤
-│                    Service Layer                         │
-│  Business Logic │ Scoring Engine │ Fraud Engine          │
-├─────────────────────────────────────────────────────────┤
-│                  Repository / Data Layer                 │
-│  JPA │ PostgreSQL │ File System                          │
-└─────────────────────────────────────────────────────────┘
-```
 
----
+🚀 Overview
 
-## 🚀 API Modules
+RiskShield is a modular backend system that simulates a real-world financial platform, including:
 
-| # | Module | Endpoints | Description |
-|---|--------|-----------|-------------|
-| 1 | **Auth** | `/auth/**` | Register, Login, Logout, Refresh Token, Me, Change Password |
-| 2 | **OTP** | `/otp/**` | Send OTP, Verify OTP, Resend OTP, Expire Time |
-| 3 | **Notification** | `/api/v1/notifications/**` | Send Email, History, Failed Retry |
-| 4 | **Credit Scoring** | `/api/v1/credit-scoring/**` | Calculate Score, Risk Level, Loan Eligibility |
-| 5 | **Fraud Detection** | `/api/v1/fraud/**` | Transaction Analysis, Blacklist, Alert Management |
-| 6 | **Audit Log** | `/api/v1/audit-logs/**` | Who Did What, When, From Where, Before/After Data |
-| 7 | **File Upload** | `/api/v1/documents/**` | Upload, Download, Delete, Type Validation |
-| 8 | **Admin Panel** | `/api/v1/admin/**` | List Users, Block, Change Role, Activate/Deactivate |
-| 9 | **Rate Limiting** | Built-in Filter | Login: 5/min, OTP: 3/5min, General: 10/min |
-| 10 | **Dashboard Analytics** | `/api/v1/analytics/**` | User Stats, Fraud Stats, Notification Stats |
+Secure authentication & authorization
+OTP-based verification
+Credit scoring engine
+Fraud detection system
+Redis-based rate limiting & idempotency
+Audit logging with AOP
+Notification system with retry
+Document management
+Admin control panel
+Analytics dashboard
+🏗 Architecture
+API Gateway Layer
+  ├── Rate Limiter (Redis)
+  ├── Idempotency (Redis)
+  ├── JWT Security
 
----
+Controller Layer
+  ├── Auth / OTP
+  ├── Credit / Fraud
+  ├── Admin / Analytics
 
-## 🛠 Tech Stack
+Service Layer
+  ├── Business Logic
+  ├── Scoring Engine
+  ├── Fraud Engine
 
-| Technology | Purpose |
-|------------|---------|
-| **Java 17** | Core language |
-| **Spring Boot 3.2** | Application framework |
-| **Spring Security** | Authentication & Authorization |
-| **JWT (jjwt 0.12)** | Stateless token auth |
-| **Spring Data JPA** | Database ORM |
-| **PostgreSQL** | Production database |
-| **Redis** | Distributed Idempotency & Caching |
-| **Spring Boot Actuator** | Production Monitoring (Health, Metrics) |
-| **Spring AOP** | Audit logging |
-| **Spring Mail** | Email notifications |
-| **SpringDoc OpenAPI** | Swagger UI documentation |
-| **Lombok** | Boilerplate reduction |
-| **H2** | Test database |
+Data Layer
+  ├── PostgreSQL (JPA)
+  ├── Redis (cache + idempotency)
+🔥 Key Features
+✔ JWT Authentication & Role-based Authorization
+✔ OTP Verification (hashed storage)
+✔ Credit Scoring Engine
+✔ Fraud Detection System
+✔ Redis-based Rate Limiting
+✔ Redis-based Idempotency
+✔ Audit Logging (AOP)
+✔ Notification System with Retry
+✔ File Upload & Document Management
+✔ Admin Panel APIs
+✔ Analytics Dashboard
+✔ Correlation ID for tracing
+✔ Feature Toggle system
+📦 API Modules
+Module	Description
+Auth	Registration, login, JWT, refresh tokens
+OTP	Email verification with expiration
+Credit	Risk scoring & eligibility
+Fraud	Transaction analysis & blacklist
+Notification	Email + retry mechanism
+Audit	AOP-based activity tracking
+Documents	File upload/download
+Admin	User & role management
+Analytics	Dashboard metrics
+Rate Limit	Redis-based protection
+🛠 Tech Stack
+Technology	Usage
+Java 17	Core language
+Spring Boot 3.2	Backend framework
+Spring Security	Auth & access control
+JWT	Stateless authentication
+PostgreSQL	Main database
+Redis	Caching, rate limiting, idempotency
+Docker	Containerization
+Spring AOP	Audit logging
+Spring Mail	Email service
+Actuator	Monitoring
+Swagger	API documentation
+🐳 Run with Docker
+docker-compose up --build
+⚙️ Environment Variables
+DB_URL=jdbc:postgresql://localhost:5432/riskshield
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
 
----
+JWT_SECRET=your_secret_key
 
-## 🏁 Getting Started
+MAIL_HOST=smtp.gmail.com
+MAIL_USERNAME=your@email.com
+MAIL_PASSWORD=your_app_password
+📖 API Docs
 
-### Prerequisites
-- Java 17+
-- PostgreSQL 14+
-- Maven 3.8+
+Swagger UI:
 
-### 1. Clone & Configure
+http://localhost:8080/swagger-ui.html
+🔒 Security
+JWT-based authentication
+Role-based access control (RBAC)
+Redis-backed rate limiting
+Redis-backed idempotency
+Hashed OTP & refresh tokens
+Audit logging with correlation ID
+📁 Project Structure
+com.seabuhi.riskshield
+ ├── common
+ ├── config
+ ├── module
+ ├── security
+💡 Why This Project?
 
-```bash
-git clone https://github.com/YOUR_USERNAME/RiskShield-backend.git
-cd RiskShield-backend
-```
+This project demonstrates:
 
-### 2. Create Database
+✔ Real-world backend architecture
+✔ Security best practices
+✔ Distributed system thinking (Redis)
+✔ Clean code & modular design
+✔ Production-ready mindset
+📄 License
 
-```sql
-CREATE DATABASE riskshield;
-```
+MIT License
 
-### 3. Set Environment Variables
+👨‍💻 Author
 
-```bash
-export DB_URL=jdbc:postgresql://localhost:5432/riskshield
-export DB_USERNAME=postgres
-export DB_PASSWORD=your_password
-export JWT_SECRET=your_secret_key_min_64_chars
-export MAIL_HOST=smtp.gmail.com
-export MAIL_USERNAME=your@email.com
-export MAIL_PASSWORD=your_app_password
-```
-
-### 4. Run
-
-```bash
-./mvnw spring-boot:run
-```
-
-### 5. Access
-
-| Resource | URL |
-|----------|-----|
-| Swagger UI | http://localhost:8080/swagger-ui.html |
-| API Docs | http://localhost:8080/v3/api-docs |
-| Default Admin | Loaded from environment variables |
-
----
-
-## 📖 API Documentation
-
-### Auth Module
-```
-POST /auth/signup          → Register new user
-POST /auth/login           → Login & get tokens
-POST /auth/refresh         → Refresh access token
-POST /auth/logout          → Logout & revoke tokens
-GET  /auth/me              → Get current user info
-POST /auth/change-password → Change password
-```
-
-### OTP Module
-```
-POST /otp/send             → Send OTP to email
-POST /otp/verify           → Verify OTP code
-POST /otp/resend           → Resend OTP
-GET  /otp/expire-time      → Get OTP expiry time
-```
-
-### Credit Scoring Module
-```
-POST /api/v1/credit-scoring/calculate    → Calculate credit score
-GET  /api/v1/credit-scoring/risk-levels  → Get risk level definitions
-```
-
-### Fraud Detection Module
-```
-POST   /api/v1/fraud/analyze              → Analyze transaction risk
-GET    /api/v1/fraud/alerts               → Get open fraud alerts
-GET    /api/v1/fraud/alerts/user/{id}     → Get user's fraud alerts
-PATCH  /api/v1/fraud/alerts/{id}/resolve  → Resolve alert
-POST   /api/v1/fraud/blacklist            → Add to blacklist
-DELETE /api/v1/fraud/blacklist/{id}       → Remove from blacklist
-```
-
-### Admin Module
-```
-GET    /api/v1/admin/users             → List all users (paginated)
-GET    /api/v1/admin/users/{id}        → Get user details
-PATCH  /api/v1/admin/users/{id}/block  → Block user
-PATCH  /api/v1/admin/users/{id}/activate → Activate user
-PATCH  /api/v1/admin/users/{id}/role   → Change user role
-DELETE /api/v1/admin/users/{id}        → Delete user
-```
-
----
-
-## 🔒 Security
-
-| Feature | Implementation |
-|---------|---------------|
-| **Authentication** | JWT Bearer tokens (1h access, 24h refresh) |
-| **Authorization** | Role-based: ADMIN, ANALYST, CLIENT |
-| **Rate Limiting** | Per-IP, per-endpoint (Bucket4j) |
-| **Fraud Detection** | Real-time IP/Email blacklist, transaction analysis |
-| **Audit Trail** | AOP-based automatic logging with IP tracking |
-| **Password** | BCrypt hashing |
-| **OTP** | 6-digit codes, 15-min expiry, purpose-scoped |
-
----
-
-## 📁 Project Structure
-
-```
-src/main/java/com/seabuhi/riskshield/
-├── common/
-│   ├── exception/          # BusinessException, GlobalExceptionHandler
-│   ├── model/              # BaseEntity (auto-timestamps)
-│   └── response/           # ApiResponse<T> wrapper
-├── config/
-│   ├── AsyncConfig         # Async email sending
-│   ├── DataInitializer     # Seed roles & admin user
-│   ├── JpaConfig           # JPA Auditing
-│   ├── SchedulingConfig    # Scheduled tasks
-│   ├── SecurityConfig      # Spring Security + JWT
-│   └── SwaggerConfig       # OpenAPI documentation
-├── module/
-│   ├── admin/              # Admin user management
-│   ├── analytics/          # Dashboard statistics
-│   ├── assessment/         # Credit scoring engine
-│   ├── audit/              # Audit logs + AOP aspect
-│   ├── auth/               # Auth + OTP
-│   ├── document/           # File upload/download
-│   ├── fraud/              # Fraud detection engine
-│   ├── notification/       # Email + retry mechanism
-│   ├── ratelimit/          # Bucket4j rate limiting
-│   └── user/               # User & Role entities
-└── security/
-    ├── CustomUserDetailsService
-    ├── JwtAuthenticationFilter
-    ├── JwtTokenProvider
-    └── UserPrincipal
-```
-
----
-
-## 📄 License
-
-MIT License — free to use for personal and commercial projects.
-
----
-
-> Built with ❤️ for the developer community
-
+Seabuhi Khazimzade
